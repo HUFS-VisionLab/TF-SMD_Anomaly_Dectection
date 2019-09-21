@@ -22,7 +22,7 @@ def compare_loss(loss_dict, model_path ,save_figure_path):
         
     plt.xlabel("the number of data")
     plt.ylabel("loss")
-    plt.ylim(0, 1)
+    #plt.ylim(0, 1)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size' : 12})
     plt.tight_layout(pad=1, w_pad=1, h_pad=1)
     plt.savefig(f"{model_path}/compare_loss.png")
