@@ -85,7 +85,7 @@ def preprocess(category, save_path, timesteps = 64, type='mfcc'):
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_type', type=str, default='mfcc', help='-')
+    parser.add_argument('--data_type', type=str, default='mel', help='-')
     parser.add_argument('--data_path', type=str, default='../dataset', help='-')
     parser.add_argument('--p', type=float, default='0.25', help='')
     parser.add_argument('--timesteps', type=int, default=64, help='-')
