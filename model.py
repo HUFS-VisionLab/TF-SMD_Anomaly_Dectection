@@ -102,10 +102,12 @@ class Model:
     def _calc_time(self, n_iteration, elasped_time):
         total_time = n_iteration * elasped_time
 
-        hour = total_time // 3600
-        minute = (total_time % 3600) // 60
+        hour = str(int(total_time // 3600)).zfill(2)
+        minute = str(int((total_time % 3600) // 60)).zfill(2)
+        second = str(int(total_time % 60)).zfill(2)
 
-        log = "{} hour {} minute".format(hour, minute)
+        
+        log = f"{hour}:{minute}:{second}"
 
         return log
         
@@ -147,7 +149,8 @@ class Model:
             
             end = time.time()
             self.loss_list.append(total_loss)
-            print("Epoch :", epoch, ", Loss :", total_loss, 'Elasped time :', self._calc_time(1, end-start))
+            print("Epoch : {epoch}\tLoss : {total_loss:.4f} \tElasped time : {elasped_time}".format(
+                   epoch=epoch, total_loss=total_loss, elasped_time=self._calc_time(1, end-start)))
             
         
         print("Training completed")
