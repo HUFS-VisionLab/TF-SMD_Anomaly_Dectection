@@ -88,7 +88,7 @@ if __name__ == '__main__' :
     parser.add_argument('--data_type', type=str, default='timesteps_64_mel_80', help='-')
     parser.add_argument('--model_path', type=str, default='./model', help='-')
     parser.add_argument('--inference', action='store_true', default=False, help='-')
-    parser.add_argument('--loss_log_scale', type=int, default=1, help='-')
+    parser.add_argument('--loss_log_scale', type=int, default=0, help='-')
     args, unknown = parser.parse_known_args()
     
     """ Preprare the path of dataset and load hyper parameter of model """
