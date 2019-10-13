@@ -40,22 +40,22 @@ def feature2spectrum(S, mode='avg'):
     return spect
 
 
-def preprocess(category, save_path, timesteps = 64, type='mfcc'):
+def preprocess(category, save_path, timesteps = 64, data_type='mfcc'):
     category_name = os.path.basename(category)
     
     makedir(f"{save_path}/{category_name}")
     wav_list = glob.glob(os.path.join(category, '*.wav'))
     
     wav2feature = None
-    if type == 'stft':
+    if data_type == 'stft':
         wav2feature = audio.spectrogram
-    elif type == 'mel':
+    elif data_type == 'mel':
         wav2feature = audio.melspectrogram
-    elif type == 'mfcc':
+    elif data_type == 'mfcc':
         wav2feature = audio.mfcc
         
     wav2spectrum = lambda x: feature2spectrum(wav2feature(x))
-     
+    
     
     for wav_path in wav_list:
         filename = os.path.basename(wav_path)[:-4]
@@ -82,9 +82,11 @@ def preprocess(category, save_path, timesteps = 64, type='mfcc'):
         sequences = np.stack(spectrum_list, 0) # Shape = (sequence_length, n_dims)
         np.save(f"{save_path}/{category_name}/{filename}.npy", sequences)
     
+    
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--data_version', type=int, default=2018, help='-')
     parser.add_argument('--data_type', type=str, default='mel', help='-')
     parser.add_argument('--data_path', type=str, default='../dataset', help='-')
     parser.add_argument('--p', type=float, default='0.25', help='')
@@ -94,14 +96,14 @@ if __name__ == '__main__':
     
     """ Split dataset to train and test set"""
     remove_dir = lambda path : shutil.rmtree(path, ignore_errors=True) if os.path.exists(path) else None
-    trainset_path = os.path.join(args.data_path, 'train')
-    testset_path  = os.path.join(args.data_path, 'test')
+    trainset_path = os.path.join(args.data_path, f'{args.data_version}_train')
+    testset_path  = os.path.join(args.data_path, f'{args.data_version}_test')
     remove_dir(trainset_path)
-    makedir(trainset_path)
+    os.makedirs(trainset_path, exist_ok=True)
     remove_dir(testset_path)
-    makedir(testset_path)
+    os.makedirs(testset_path, exist_ok=True)
     
-    dataset_list = glob.glob(os.path.join(args.data_path, 'data', '*'))
+    dataset_list = glob.glob(os.path.join(args.data_path, f'{args.data_version}_set', '*'))
     for category_path in dataset_list:
         category_name = os.path.basename(category_path)
         makedir(os.path.join(trainset_path, category_name))
@@ -132,22 +134,34 @@ if __name__ == '__main__':
         
         
     """ Preprocessing """
-    trainset_path = glob.glob(os.path.join(trainset_path, '*'))
-    testset_path = glob.glob(os.path.join(testset_path, '*'))
+    trainsetPath_list = glob.glob(os.path.join(trainset_path, '*'))
+    testsetPath_list = glob.glob(os.path.join(testset_path, '*'))
     
-    save_path = f"../data_{args.data_type}"
-    save_train_path = os.path.join(save_path, 'train')
-    save_test_path = os.path.join(save_path, 'test')
-    makedir(save_path)
-    makedir(save_train_path)
-    makedir(save_test_path)
     
+    n_dims = None
+    if args.data_type == 'stft':
+        n_dims = int(1 + hparams.n_fft/2)
+    elif args.data_type == 'mel':
+        n_dims = hparams.n_mels
+    elif args.data_type == 'mfcc':
+        n_dims = hparams.n_mfcc
+    
+    save_path = f"../data_{args.data_type}_{n_dims}_dims"
+    save_train_path = os.path.join(save_path, f'{args.data_version}_train')
+    save_test_path = os.path.join(save_path, f'{args.data_version}_test')
+    os.makedirs(save_train_path, exist_ok=True)
+    os.makedirs(save_test_path, exist_ok=True)
+
     print("Preprocessing train set")
-    for category_path in trainset_path:
-        preprocess(category_path, save_train_path, timesteps=args.timesteps, type=args.data_type)
+    for category_path in trainsetPath_list:
+        preprocess(category_path, save_train_path, timesteps=args.timesteps, data_type=args.data_type)
+    remove_dir(trainset_path)
     print("Done")
         
     print("Preprocessing test set")
-    for category_path in testset_path:
-        preprocess(category_path, save_test_path, timesteps=args.timesteps, type=args.data_type)
+    for category_path in testsetPath_list:
+        preprocess(category_path, save_test_path, timesteps=args.timesteps, data_type=args.data_type)
+    remove_dir(testset_path)
     print("Done")
+    
+    
