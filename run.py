@@ -42,7 +42,7 @@ def initialize(args):
     
     dataset = dataset_2018 if args.data_version == 2018 else dataset_2019
     
-    n_dims = int(args.data_type.split('_')[1])
+    n_dims = int(args.data_type.split('_')[-1])
     dataset_path = f'./data_{args.data_type}_dims'
     trainset_name = 'train_' + '_'.join(args.target_category)
     experiment = os.path.join(dataset_path, 'experiment')
@@ -85,7 +85,7 @@ if __name__ == '__main__' :
     parser.add_argument('--batch_size', type=int, default=None, help='-')
     parser.add_argument('-l', '--target_category', nargs='*', default=None, help='-')
     parser.add_argument('--data_version', type=int, default=2019, help='-')
-    parser.add_argument('--data_type', type=str, default='mel_80', help='-')
+    parser.add_argument('--data_type', type=str, default='timesteps_64_mel_80', help='-')
     parser.add_argument('--model_path', type=str, default='./model', help='-')
     parser.add_argument('--inference', action='store_true', default=False, help='-')
     parser.add_argument('--loss_log_scale', type=int, default=1, help='-')
