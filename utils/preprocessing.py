@@ -146,7 +146,7 @@ if __name__ == '__main__':
     elif args.data_type == 'mfcc':
         n_dims = hparams.n_mfcc
     
-    save_path = f"../data_timespteps_{args.timesteps}_{args.data_type}_{n_dims}_dims"
+    save_path = f"../data_timesteps_{args.timesteps}_{args.data_type}_{n_dims}_dims"
     save_train_path = os.path.join(save_path, f'{args.data_version}_train')
     save_test_path = os.path.join(save_path, f'{args.data_version}_test')
     os.makedirs(save_train_path, exist_ok=True)
