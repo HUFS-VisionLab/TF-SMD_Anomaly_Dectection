@@ -18,7 +18,7 @@ def compare_loss(loss_dict, model_path ,save_figure_path, log_scaling=0):
     plt.rcParams['font.size'] = 15
     
     xlabel = "the number of data"
-    ylabel = "loss -- y=log2(x+2)" if log_scaling==1 else "loss"
+    ylabel = "loss -- y=log10(x+10)" if log_scaling==1 else "loss"
     
     for key, loss_list in loss_dict.items():
         if log_scaling == 1:
