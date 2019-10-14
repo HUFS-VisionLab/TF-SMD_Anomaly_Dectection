@@ -57,7 +57,7 @@ python run.py
 ```
 
 *Required* :
-- `--target_category` : List of category to train. *Default*: `["AT"]`. *Ex*: `--target_category AT ST` -> ["AT, ST"]
+- `--target_category` : List of category to train. *Default*: `None`. *Ex*: `--target_category AT ST` -> ["AT, ST"]
 
 *Optional* :  
 - `--n_layers`: The number of layers. *Default*: `3`
