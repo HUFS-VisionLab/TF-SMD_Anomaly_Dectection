@@ -46,6 +46,7 @@ python preprocessing
 ```
 
 *Optional* :  
+- `--data_version` : Version of dataset. *choices*: 2018, 2019
 - `--data_type`: Type of training data. *Choices*: `'mel'`, `'mfcc'`, `'stft'`. *Default*: `'mel'`
 - `--data_path`: Path of the dataset. *Default*: `../dataset`
 - `--p`: Ratio of test set. *Default*: `0.25`
@@ -60,13 +61,15 @@ python run.py
 
 *Optional* :  
 - `--n_layers`: The number of layers. *Default*: `3`
-- `--is_bidirectional`: *Choices*: 0(Unidirectional), 1(Bidirectional). *Default*: `1`
+- `--is_bidirectional`: *Choices*: 0(1D-Conv), 1(Unidirectional), 2(Bidirectional). *Default*: `2`
 - `--learning_rate`: The value of learning rate for Adam Optimizer. *Default*: `0.005`
 - `--beta_1`: Beta_1 of Adam Optimizer. *Default*: `0.9`
 - `--beta_2`: Beta_2 of Adam Optimizer. *Default*: `0.999`
 - `--epsilon`: Epsilon of Adam Optimizer. *Default*: `1e-08`
 - `--epochs`: The number of epochs. *Default*: `1000`
 - `--batch_size`: The size of mini-batch. *Default*: `None`. *type*: int
-- `--data_path`: Path of the dataset. *Default*: `../dataset`
+- `--data_version`: Version of dataset. *Choices*: `2018`, `2019`. *Default*: `2019`
+- `--data_type`: type of preprocessed dataset. *Default*: `timesteps_64_mel_80`
 - `--model_path`: Save path of trained model. *Default*: `./model`
 - `--inference`: *Choices*: False(train), True(test). *Default*: `False`
+- `--loss_log_scale`: If you want to see log scaled loss value. *Choice*: `0(False)`, `1(True)`.
