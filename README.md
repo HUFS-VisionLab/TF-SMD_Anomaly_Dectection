@@ -19,7 +19,7 @@
 - `model.py` : nn model code.
 - `plot.py` : code to visualize results.
 - `run.py` : main code to execute training and test.
-- `dataset` : dataset.
+- `dataset/` : dataset directory
 
 ## How to use
 #### Hyper Parameter for preprocessing
