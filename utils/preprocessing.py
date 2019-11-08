@@ -86,10 +86,10 @@ def preprocess(category, save_path, timesteps = 64, data_type='mfcc'):
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_version', type=int, default=2018, help='-')
+    parser.add_argument('--data_version', type=str, default='2019-1', help='-')
     parser.add_argument('--data_type', type=str, default='mel', help='-')
     parser.add_argument('--data_path', type=str, default='../dataset', help='-')
-    parser.add_argument('--p', type=float, default='0.25', help='')
+    parser.add_argument('--p', type=float, default='0.2', help='')
     parser.add_argument('--timesteps', type=int, default=64, help='-')
     args, unknown = parser.parse_known_args()
     
