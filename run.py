@@ -46,7 +46,6 @@ if __name__ == '__main__' :
     parser.add_argument('--n_layers', type=int, default=3, help='-')
     parser.add_argument('--model_type', type=int, default=2, help='-')
     parser.add_argument('--no_bidirectional', action='store_true', default=False, help='-')
-    parser.add_argument('--data_version', type=str, default='2019-2', help='-')
     parser.add_argument('--data_type', type=str, default='timesteps_64_mel_80', help='-')
     parser.add_argument('--augment', action='store_true', default=False, help='-')
     parser.add_argument('--learning_rate', type=float, default=0.005, help='-')
@@ -64,6 +63,7 @@ if __name__ == '__main__' :
     
     """ Preprare the path of dataset and load hyper parameter of model """
     datasets_loader = DatasetsLoader(targets=args.targets, data_type=args.data_type, augment=args.augment)
+    data_version - datasets_loader.version
     trainPath_dict = datasets_loader.pathList_dict['train']
     testPath_dict = datasets_loader.pathList_dict['test']
     data_type = args.data_type.split('_')
@@ -85,11 +85,11 @@ if __name__ == '__main__' :
     model_name       = f'{model_name}_{args.n_layers}_{args.epochs}'
     target_name      = "_".join(args.targets)
     if args.augment == True:
-        args.save_path   = os.path.join(model_path, str(args.data_version), model_name,  f'{args.data_type}_shifted')
-        save_figure_path = os.path.join(figure_path, str(args.data_version), model_name, f'{args.data_type}_shifted')
+        args.save_path   = os.path.join(model_path, str(data_version), model_name,  f'{args.data_type}_shifted')
+        save_figure_path = os.path.join(figure_path, str(data_version), model_name, f'{args.data_type}_shifted')
     else:
-        args.save_path   = os.path.join(model_path, str(args.data_version), model_name,  f'{args.data_type}')
-        save_figure_path = os.path.join(figure_path, str(args.data_version), model_name, f'{args.data_type}')
+        args.save_path   = os.path.join(model_path, str(data_version), model_name,  f'{args.data_type}')
+        save_figure_path = os.path.join(figure_path, str(data_version), model_name, f'{args.data_type}')
         
     os.makedirs(args.save_path, exist_ok=True)
     os.makedirs(save_figure_path, exist_ok=True)

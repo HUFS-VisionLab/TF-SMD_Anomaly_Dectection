@@ -22,12 +22,13 @@ class DatasetsLoader:
     }
     datasets_2019_2 = {
         'CLR-2'  : {'name':'CLR-085'},
-        'MA'   : {'name':'MA-A097E'},
-        'MG-2'  : {'name':'MG-A200B'},
-        'NA-2'  : {'name':'NA-9285'},
+        'MA'     : {'name':'MA-A097E'},
+        'MG-2'   : {'name':'MG-A200B'},
+        'NA-2'   : {'name':'NA-9285'},
     }
     
     def __init__(self, targets, data_type, augment=False):
+        self.version = None
         self.targets = targets
         self.train_name = self.targets[0] if len(self.targets) == 1 else "_".join(self.targets)
         self.augment = augment
@@ -36,14 +37,17 @@ class DatasetsLoader:
         for target in self.targets:
             if target in DatasetsLoader.datasets_2018:
                 self.datasets = DatasetsLoader.datasets_2018
+                self.version = '2018'
                 break
             
             if target in DatasetsLoader.datasets_2019_1:
                 self.datasets = DatasetsLoader.datasets_2019_1
+                self.version = '2019-1'
                 break
                 
             if target in DatasetsLoader.datasets_2019_2:
                 self.datasets = DatasetsLoader.datasets_2019_2
+                self.version = '2019-2'
                 break
                 
         for key, value in self.datasets.items():
