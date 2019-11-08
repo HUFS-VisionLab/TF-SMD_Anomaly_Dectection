@@ -21,6 +21,21 @@ def makedir(path):
         print("Already exist: %s" %(path))
         
         
+def normalize(S):
+    """
+    Args:
+        S: np.array, Spectrogram. Shape=(f, t)
+    Returns:
+        S: np.array, normalized Spectrogram. Shape=(f, t)
+    """
+    mean = np.expand_dims(np.mean(S, axis=1), axis=1)
+    std = np.expand_dims(np.std(S, axis=1), axis=1)
+    
+    S = (S - mean)/std
+    
+    return S
+        
+        
 def feature2spectrum(S, mode='avg'):
     """ Summation or Average by time
     Args:
@@ -40,128 +55,115 @@ def feature2spectrum(S, mode='avg'):
     return spect
 
 
-def preprocess(category, save_path, timesteps = 64, data_type='mfcc'):
-    category_name = os.path.basename(category)
+def preprocess(target_dir, save_path, args):
+    target_name = os.path.basename(target_dir)
+    print(f">> target : {target_name}")
+    for saveDir_name in ['train', 'test', 'train_shifted', 'test_shifted']:
+        saveDir_path = os.path.join(save_path, target_name, saveDir_name)
+        os.makedirs(saveDir_path, exist_ok=True)
+
+    join_path = lambda x,y : os.path.join(x,y)
+    trainPath_list = glob.glob(join_path(target_dir, 'train/*.wav'))
+    testPath_list = glob.glob(join_path(target_dir, 'test/*.wav'))
+    dataPath_dict = {'train' : trainPath_list, 'test' : testPath_list}
     
-    makedir(f"{save_path}/{category_name}")
-    wav_list = glob.glob(os.path.join(category, '*.wav'))
-    
-    wav2feature = None
-    if data_type == 'stft':
-        wav2feature = audio.spectrogram
-    elif data_type == 'mel':
-        wav2feature = audio.melspectrogram
-    elif data_type == 'mfcc':
-        wav2feature = audio.mfcc
-        
+    wav2feature = set_dict[hparams.data_type]['func']
     wav2spectrum = lambda x: feature2spectrum(wav2feature(x))
     
     
-    for wav_path in wav_list:
-        filename = os.path.basename(wav_path)[:-4]
-        wav = audio.load_wav(wav_path)
-
-        second = wav.shape[0] // hparams.sample_rate
-        window_len = (hparams.sample_rate * second) // (timesteps // 2)
-        hop_len = window_len // 2 # overlapping 50%
-        
-        spectrum_list = []
-        for i in range(timesteps):
-            if i != timesteps-1:
-                window_start = i * hop_len
-                window_end = window_start + window_len
-            else:
-                window_start = -window_len
-                window_end   = None
-
-            data = wav[window_start:window_end]
+    for key, path_list in dataPath_dict.items():
+        if len(path_list) % 2 != 0:
+            path_list += [path_list[0]]
             
-            spectrum = wav2spectrum(data)
-            spectrum_list.append(spectrum)
+        for i in range(int(len(path_list)/2)):
+            idx = i*2
+            path_1 = path_list[idx] 
+            path_2 = path_list[idx+1]
             
-        sequences = np.stack(spectrum_list, 0) # Shape = (sequence_length, n_dims)
-        np.save(f"{save_path}/{category_name}/{filename}.npy", sequences)
-    
+            
+            # Original
+            name_1 = os.path.basename(path_1)[:-4]
+            name_2 = os.path.basename(path_2)[:-4]
+            wav_1 = audio.load_wav(path_1)
+            wav_2 = audio.load_wav(path_2)
+            
+            # Time shift (Augment)
+            new_wav = np.concatenate([wav_1, wav_2])
+            
+            start = int(hparams.sample_rate*hparams.timeshift)
+            end = start + wav_1.shape[0]
+            wav_3 = new_wav[start:end]
+            
+            start = wav_1.shape[0] - int(hparams.sample_rate*hparams.timeshift)
+            end = - int(hparams.sample_rate*hparams.timeshift)
+            wav_4 = new_wav[start:end]
+            
+            
+            wav_list = [wav_1, wav_2, wav_3, wav_4]
+            name_list = [name_1, name_2, f'{name_1}_shifted', f'{name_2}_shifted']
+            
+            for j in range(len(wav_list)):
+                wav = wav_list[j]
+                name = name_list[j]
+                
+                second = wav.shape[0] // hparams.sample_rate
+                window_len = (hparams.sample_rate * second) // (hparams.seq_length // 2)
+                hop_len = window_len // 2 # overlapping 50%
+                
+                spectrum_list = []
+                for i in range(hparams.seq_length):
+                    if i != hparams.seq_length-1:
+                        window_start = i * hop_len
+                        window_end = window_start + window_len
+                    else:
+                        window_start = -window_len
+                        window_end   = None
+
+                    data = wav[window_start:window_end]
+
+                    spectrum = wav2spectrum(data)
+                    spectrum_list.append(spectrum)
+
+                sequences = np.stack(spectrum_list, 0) # Shape = (sequence_length, n_dims)
+                
+                if j < 2:
+                    np.save(f"{save_path}/{target_name}/{key}/{name}.npy", sequences)
+                else:
+                    np.save(f"{save_path}/{target_name}/{key}_shifted/{name}.npy", sequences)
     
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_version', type=str, default='2019-1', help='-')
-    parser.add_argument('--data_type', type=str, default='mel', help='-')
+    parser.add_argument('--data_version', type=int, default=2019, help='-')
     parser.add_argument('--data_path', type=str, default='../dataset', help='-')
-    parser.add_argument('--p', type=float, default='0.2', help='')
-    parser.add_argument('--timesteps', type=int, default=64, help='-')
     args, unknown = parser.parse_known_args()
     
     
-    """ Split dataset to train and test set"""
-    remove_dir = lambda path : shutil.rmtree(path, ignore_errors=True) if os.path.exists(path) else None
-    trainset_path = os.path.join(args.data_path, f'{args.data_version}_train')
-    testset_path  = os.path.join(args.data_path, f'{args.data_version}_test')
-    remove_dir(trainset_path)
-    os.makedirs(trainset_path, exist_ok=True)
-    remove_dir(testset_path)
-    os.makedirs(testset_path, exist_ok=True)
+    targetDir_list = glob.glob(os.path.join(args.data_path, f'{args.data_version}_set', '*'))
+        
     
-    dataset_list = glob.glob(os.path.join(args.data_path, f'{args.data_version}_set', '*'))
-    for category_path in dataset_list:
-        category_name = os.path.basename(category_path)
-        makedir(os.path.join(trainset_path, category_name))
-        makedir(os.path.join(testset_path, category_name))
-        fileslist = glob.glob(os.path.join(category_path, '*'))
-        
-        random.seed(2019)
-        random.shuffle(fileslist)
-        
-        n_files = len(fileslist)
+    set_dict={
+        'stft' : {
+            'func' : audio.spectrogram,
+            'n_dims' : int(1 + hparams.window_length/2)
+        },
+        'mel' : {
+            'func' : audio.melspectrogram,
+            'n_dims' :  hparams.n_mels
+        },
+        'mfcc' : {
+            'func' : audio.mfcc,
+            'n_dims' :  hparams.n_mfcc
+        }
+    }
+    
+    data_type = hparams.data_type
+    seq_length = hparams.seq_length
+    n_dims = set_dict[data_type]['n_dims']
+    
+    save_path = f"../timesteps_{seq_length}_{data_type}_{n_dims}"
 
-        #if n_files <= 15 : args.p = 0.4 # if a category a small amount of data, increase the amount of test data.
-            
-        files4train = fileslist[:int(n_files * (1-args.p))]
-        files4test  = fileslist[int(n_files *(1-args.p)):]
-        
-        for src in files4train:
-            filename = os.path.basename(src)
-            dst = os.path.join(trainset_path, category_name, filename)
-            
-            shutil.copy(src, dst) if not os.path.exists(dst) else None
-            
-        for src in files4test:
-            filename = os.path.basename(src)
-            dst = os.path.join(testset_path, category_name, filename)
-            
-            shutil.copy(src, dst) if not os.path.exists(dst) else None
-        
-        
-    """ Preprocessing """
-    trainsetPath_list = glob.glob(os.path.join(trainset_path, '*'))
-    testsetPath_list = glob.glob(os.path.join(testset_path, '*'))
-    
-    
-    n_dims = None
-    if args.data_type == 'stft':
-        n_dims = int(1 + hparams.n_fft/2)
-    elif args.data_type == 'mel':
-        n_dims = hparams.n_mels
-    elif args.data_type == 'mfcc':
-        n_dims = hparams.n_mfcc
-    
-    save_path = f"../data_timesteps_{args.timesteps}_{args.data_type}_{n_dims}_dims"
-    save_train_path = os.path.join(save_path, f'{args.data_version}_train')
-    save_test_path = os.path.join(save_path, f'{args.data_version}_test')
-    os.makedirs(save_train_path, exist_ok=True)
-    os.makedirs(save_test_path, exist_ok=True)
-
-    print("Preprocessing train set")
-    for category_path in trainsetPath_list:
-        preprocess(category_path, save_train_path, timesteps=args.timesteps, data_type=args.data_type)
-    remove_dir(trainset_path)
-    print("Done")
-        
-    print("Preprocessing test set")
-    for category_path in testsetPath_list:
-        preprocess(category_path, save_test_path, timesteps=args.timesteps, data_type=args.data_type)
-    remove_dir(testset_path)
-    print("Done")
-    
-    
+    print(">> Preproecssing..")
+    for target_dir in targetDir_list:
+        preprocess(target_dir, save_path, set_dict)
+    print(">> Done")   

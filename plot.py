@@ -13,11 +13,11 @@ def save_loss(loss_list, model_path):
     plt.close()
     
     
-def compare_loss(loss_dict, model_path ,save_figure_path, log_scaling=0):
+def compare_loss(loss_dict, model_path, threashold, save_figure_path, log_scaling=0):
     plt.clf()
     plt.rcParams['font.size'] = 15
     
-    xlabel = "the number of data"
+    xlabel = "index of data"
     ylabel = "loss -- y=log10(x+10)" if log_scaling==1 else "loss"
     
     for key, loss_list in loss_dict.items():
@@ -28,7 +28,9 @@ def compare_loss(loss_dict, model_path ,save_figure_path, log_scaling=0):
         
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    #plt.ylim(0, 1)
+    plt.ylim(0, 1)
+    if threashold != None:
+        plt.axhline(y=threashold, color='r', linestyle='-')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size' : 12})
     plt.tight_layout(pad=1, w_pad=1, h_pad=1)
     plt.savefig(f"{model_path}/compare_loss.png")

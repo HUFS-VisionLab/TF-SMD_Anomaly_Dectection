@@ -45,7 +45,6 @@ def melspectrogram(y):
     S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
     return _normalize(S)
 
-
 def mfcc(y):
     D = _stft(preemphasis(y))
     S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
