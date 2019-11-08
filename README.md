@@ -13,32 +13,43 @@
 - Tensorflow (1.10 <= x <=1.14)
 
 ## Files
-- `hparams.py` : hyper parameter for preprocessing audio data.
+- `dataset/` : dataset directory
+- `hparams.py` : hyper parameter for preprocessing audio data. IMPORTANT
 - `utils/audio.py` : audio preprocessing functions.
 - `utils/preprocessing.py` : main preprocessing code.
 - `model.py` : nn model code.
+- `tf_models.py` : tf modules for nn model code.
 - `plot.py` : code to visualize results.
 - `run.py` : main code to execute training and test.
-- `dataset/` : dataset directory
+- `benchmark.py` : code to benchmark.
+- `simulate.py` : script to run main process.
 
 ## How to use
 #### Hyper Parameter for preprocessing
 ```
 class hparams:
-    # for audio data
+    # Hyper Parameter for preprocessing
+    data_type = 'mel'
+    seq_length = 64
+    timeshift = 0.5 # 500ms
+
+    # Hyper Parameters for Audio 
     sample_rate = 192 * 1000
     preemphasis = 0.97
-    n_fft = 2048
-    win_length = 2048
-    hop_length = 2048 // 4
+    window_length = 0.02 #20ms
+    window_stride = 0.01 #10ms
+    n_fft = int(sample_rate * window_length) 
+    win_length = n_fft
+    hop_length = int(sample_rate * window_stride) 
     n_mels = 80
     n_mfcc = 60
     min_level_db = -100
     ref_level_db = 20
     max_iters=200
     griffin_lim_iters=60
-    power=1.5
+    power=1.5  
 ```
+
 #### Preprocessing
 ```
 cd ./utils
@@ -46,30 +57,32 @@ python preprocessing
 ```
 
 *Optional* :  
-- `--data_version` : Version of dataset. *choices*: 2018, 2019
-- `--data_type`: Type of training data. *Choices*: `'mel'`, `'mfcc'`, `'stft'`. *Default*: `'mel'`
+- `--data_version` : Version of dataset. *choices*: '2018', '2019-1', '2019-2'
 - `--data_path`: Path of the dataset. *Default*: `../dataset`
-- `--p`: Ratio of test set. *Default*: `0.25`
-- `--timesteps`: Length of input sequence. *Default*: `64`
+
 #### Running
 ```
 python run.py
+
+ex)
+python run.py --epochs 5000 --n_layers 4 --model_type 0 --data_type timesteps_64_mel_80 --targets CLR
 ```
 
 *Required* :
-- `--target_category` : List of category to train. *Default*: `None`. *Ex*: `--target_category AT ST` -> ["AT, ST"]
+- `--targets` : List of category to train. *Default*: `None`.
+  *Ex*: `--targets AT` -> ["AT"], `--targets AT ST` -> ["AT, ST"] 
 
 *Optional* :  
 - `--n_layers`: The number of layers. *Default*: `3`
-- `--is_bidirectional`: *Choices*: 0(1D-Conv), 1(Unidirectional), 2(Bidirectional). *Default*: `2`
+- `--mode_type`: *Choices*: 0(Basic), 1(Autoencoder), 2(AutoEncoder_context), 3(OneClass), 4(OneClass_condition). *Default*: `2`
+- `--no_bidirectional`: action='store_true', *Default*: `False`
+- `--data_type`: The detail of feature extraction. *Default*: `timesteps_64_mel_80`
 - `--learning_rate`: The value of learning rate for Adam Optimizer. *Default*: `0.005`
 - `--beta_1`: Beta_1 of Adam Optimizer. *Default*: `0.9`
 - `--beta_2`: Beta_2 of Adam Optimizer. *Default*: `0.999`
 - `--epsilon`: Epsilon of Adam Optimizer. *Default*: `1e-08`
-- `--epochs`: The number of epochs. *Default*: `1000`
+- `--epochs`: The number of epochs. *Default*: `3000`
 - `--batch_size`: The size of mini-batch. *Default*: `None`. *type*: int
-- `--data_version`: Version of dataset. *Choices*: `2018`, `2019`. *Default*: `2019`
-- `--data_type`: type of preprocessed dataset. *Default*: `timesteps_64_mel_80`
 - `--model_path`: Save path of trained model. *Default*: `./model`
 - `--inference`: *Choices*: False(train), True(test). *Default*: `False`
 - `--loss_log_scale`: If you want to see log scaled loss value. *Choice*: `0(False)`, `1(True)`.
