@@ -63,7 +63,7 @@ if __name__ == '__main__' :
     
     """ Preprare the path of dataset and load hyper parameter of model """
     datasets_loader = DatasetsLoader(targets=args.targets, data_type=args.data_type, augment=args.augment)
-    data_version - datasets_loader.version
+    data_version = datasets_loader.version
     trainPath_dict = datasets_loader.pathList_dict['train']
     testPath_dict = datasets_loader.pathList_dict['test']
     data_type = args.data_type.split('_')
