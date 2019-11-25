@@ -116,29 +116,25 @@ if __name__ == '__main__' :
             loss_dict = {}
             threashold = None
 
-            y_true = []  # binary
-            y_score = [] # l2 loss
-            
-            # Get threshold from sample data
-            for name, path_list in testPath_dict.items():
-                if  name == target_name:
-                    loss_list = model.inference(path_list)
-                    min_threshold = np.min(loss_list)
-                    threshold = np.mean(loss_list) * 1.2
-
-            # Figure with threshold
-            max_threshold = 0
+            max_loss = 0 
             for name, path_list in testPath_dict.items():
                 loss_list = model.inference(path_list)
-                max_threshold = max(max_threshold, np.max(loss_list))
-                if  name == target_name:
-                    if len(args.targets) == 1:
-                        name = datasets_loader.datasets[name]['name'] # If not trained target, use full name. Not important
-                else:
-                    name =datasets_loader.datasets[name]['name']
+                max_loss = max(max_loss, np.max(loss_list))
 
+                if name == target_name:
+                    min_loss = np.min(loss_list)
+                    avg_loss = np.mean(loss_list)
+                    threshold = avg_loss * 1.2
+                    if len(args.targets) == 1:
+                        name = datasets_loader.datasets[name]['name'] 
+                else: 
+                    # If not trained target, use full name. Not important
+                    name =datasets_loader.datasets[name]['name']
+                    
                 loss_dict[name] = loss_list
-            compare_loss(loss_dict,  args.save_path, threshold, save_figure_path, args.loss_log_scale)
+                
             
-            roc = calc_roc(loss_dict, datasets_loader.datasets[target_name]['name'] , min_max=(min_threshold, max_threshold)) # evaluate with ROC
-            np.save(f'{save_figure_path}_roc.npy', roc)
+            compare_loss(loss_dict,  args.save_path, avg_loss, save_figure_path, log_scaling=args.loss_log_scale)
+             
+            """roc = calc_roc(loss_dict, datasets_loader.datasets[target_name]['name'] , min_max=(min_loss, max_loss)) # evaluate with ROC
+            np.save(f'{save_figure_path}_roc.npy', roc)"""
