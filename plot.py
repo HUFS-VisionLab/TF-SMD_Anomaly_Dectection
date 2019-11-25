@@ -13,7 +13,7 @@ def save_loss(loss_list, model_path):
     plt.close()
     
     
-def compare_loss(loss_dict, model_path, threashold, save_figure_path, log_scaling=0):
+def compare_loss(loss_dict, model_path, value, save_figure_path, weight=1.2, log_scaling=0):
     plt.clf()
     plt.rcParams['font.size'] = 15
     
@@ -28,11 +28,17 @@ def compare_loss(loss_dict, model_path, threashold, save_figure_path, log_scalin
         
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.ylim(0, 1)
-    if threashold != None:
-        plt.axhline(y=threashold, color='r', linestyle='-')
+    if value != None:
+        threshold = value * weight
+        plt.axhline(y=threshold, color='r', linestyle='-')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size' : 12})
     plt.tight_layout(pad=1, w_pad=1, h_pad=1)
+    
     plt.savefig(f"{model_path}/compare_loss.png")
     plt.savefig(f"{save_figure_path}_compare_loss.png")
+    
+    plt.ylim(0, value * 5)
+    plt.savefig(f"{model_path}/compare_loss_zoom.png")
+    plt.savefig(f"{save_figure_path}_compare_loss_zoom.png")
+
     plt.close()
