@@ -6,7 +6,6 @@ import argparse
 
 import numpy as np
 import tensorflow as tf
-import torch
 
 from utils.metric import get_score
 from plot import save_loss, compare_loss 
