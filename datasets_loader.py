@@ -21,17 +21,17 @@ class DatasetsLoader:
         'NW'   : {'name':'NW'}
     }
     datasets_2019_2 = {
-        'CLR-2'  : {'name':'CLR-085'},
+        'CLR-2'  : {'name':'CLR-085-2'},
         'MA'     : {'name':'MA-A097E'},
         'MG-2'   : {'name':'MG-A200B'},
         'NA-2'   : {'name':'NA-9285'},
     }
     
-    def __init__(self, targets, data_type, augment=False):
+    def __init__(self, targets, data_type, is_augment='00'):
         self.version = None
         self.targets = targets
         self.train_name = self.targets[0] if len(self.targets) == 1 else "_".join(self.targets)
-        self.augment = augment
+        self.is_trainAug, self.is_testAug = list(is_augment)
         self.pathList_dict = {'train':{}, 'test':{}}
         
         for target in self.targets:
@@ -66,20 +66,32 @@ class DatasetsLoader:
             dataset_path = dataset['path']
 
             if target in self.targets:
-                dataPath_list = getPath_list(dataset_path, 'train')
-                dataPath_list = dataPath_list + getPath_list(dataset_path, 'train_shifted') if self.augment==True else dataPath_list
-                
-                targetTrain_list += dataPath_list
-                
-                dataPath_list = getPath_list(dataset_path, 'test')
-                dataPath_list = dataPath_list + getPath_list(dataset_path, 'test_shifted') if self.augment==True else dataPath_list
-                
-                targetTest_list += dataPath_list
+                # Train list
+                train_list = getPath_list(dataset_path, 'train')                
+                if self.is_trainAug == '1':
+                    train_list = getPath_list(dataset_path, 'train_shifted')
+                elif self.is_trainAug == '2':
+                    train_list = train_list + getPath_list(dataset_path, 'train_shifted')
+
+                targetTrain_list += train_list
+                    
+                # Test list
+                test_list = getPath_list(dataset_path, 'test')
+                if self.is_testAug == '1':
+                    test_list = getPath_list(dataset_path, 'test_shifted')
+                elif self.is_testAug == '2':
+                    test_list = test_list + getPath_list(dataset_path, 'test_shifted')
+
+                targetTest_list += test_list
             else:
-                dataPath_list = getPath_list(dataset_path, 'test')
-                dataPath_list = dataPath_list + getPath_list(dataset_path, 'test_shifted') if self.augment==True else dataPath_list
+                # Test list
+                test_list = getPath_list(dataset_path, 'test')
+                if self.is_testAug == '1':
+                    test_list = getPath_list(dataset_path, 'test_shifted')
+                elif self.is_testAug == '2':
+                    test_list = test_list + getPath_list(dataset_path, 'test_shifted')
                 
-                self.pathList_dict['test'][target] = dataPath_list
+                self.pathList_dict['test'][target] = test_list
                 
         self.pathList_dict['train'][self.train_name] = targetTrain_list
         self.pathList_dict['test'][self.train_name] = targetTest_list
