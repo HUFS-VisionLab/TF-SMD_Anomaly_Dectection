@@ -17,6 +17,7 @@
 - `hparams.py` : hyper parameter for preprocessing audio data. IMPORTANT
 - `utils/audio.py` : audio preprocessing functions.
 - `utils/preprocessing.py` : main preprocessing code.
+- `utils/metric.py` : metric functions.
 - `model.py` : nn model code.
 - `tf_models.py` : tf modules for nn model code.
 - `plot.py` : code to visualize results.
@@ -77,6 +78,7 @@ python run.py --epochs 5000 --n_layers 4 --model_type 0 --data_type timesteps_64
 - `--mode_type`: *Choices*: 0(Basic), 1(Autoencoder), 2(AutoEncoder_context), 3(OneClass), 4(OneClass_condition). *Default*: `2`
 - `--no_bidirectional`: action='store_true', *Default*: `False`
 - `--data_type`: The detail of feature extraction. *Default*: `timesteps_64_mel_80`
+- `--augment`: The options of wav's starting point. The first character is for train data, and the second character is for test data. `0` is `normal`, `1` is `shifted`, and `2` is `both`. *Choices*: '00', '01', '02', '10', '11', '12', '20', '21', '22'. *Default*: `00`
 - `--learning_rate`: The value of learning rate for Adam Optimizer. *Default*: `0.005`
 - `--beta_1`: Beta_1 of Adam Optimizer. *Default*: `0.9`
 - `--beta_2`: Beta_2 of Adam Optimizer. *Default*: `0.999`
