@@ -1,58 +1,44 @@
 import os
 import sys 
 import glob
+import scipy
 import shutil
 import random
 import librosa
 import numpy as np
 import argparse
 
-import audio
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
 from hparams import hparams
 
 
-def makedir(path):
-    try:
-        os.mkdir(path)
-        print("Make dir: %s" %(path))
-    except:
-        print("Already exist: %s" %(path))
-        
-        
-def normalize(S):
+def min_max_scaling(x):
     """
     Args:
         S: np.array, Spectrogram. Shape=(f, t)
     Returns:
-        S: np.array, normalized Spectrogram. Shape=(f, t)
+        S: np.array, scalied Spectrogram. Shape=(f, t)
     """
-    mean = np.expand_dims(np.mean(S, axis=1), axis=1)
-    std = np.expand_dims(np.std(S, axis=1), axis=1)
+    _max = np.max(x)
+    _min = np.min(x)
     
-    S = (S - mean)/std
+    x = (x - _min + 1e-7)  / (_max - _min)
     
-    return S
+    return x
         
         
-def feature2spectrum(S, mode='avg'):
+def time_wise_average(S):
     """ Summation or Average by time
     Args:
-        S : np.array, normalized spectrogram. Shape=(n_mfcc, time) or (frame_bins, time)
+        S : np.array, Spectrogram. Shape=(n_mfcc, time) or (frame_bins, time)
         
     Returns:
         spect : np.array, spectrum. Shape=(n_mfcc) or (frame_bins)
     """
-    func = None
-    if mode == 'avg':
-        func = np.mean
-    if mode == 'sum':
-        func = np.sum
-        
-    spect = func(S, axis=-1)
+    spectrum = np.mean(S, axis=-1)
 
-    return spect
+    return spectrum
 
 
 def preprocess(target_dir, save_path, args):
@@ -67,10 +53,6 @@ def preprocess(target_dir, save_path, args):
     testPath_list = glob.glob(join_path(target_dir, 'test/*.wav'))
     dataPath_dict = {'train' : trainPath_list, 'test' : testPath_list}
     
-    wav2feature = set_dict[hparams.data_type]['func']
-    wav2spectrum = lambda x: feature2spectrum(wav2feature(x))
-    
-    
     for key, path_list in dataPath_dict.items():
         if len(path_list) % 2 != 0:
             path_list += [path_list[0]]
@@ -84,18 +66,20 @@ def preprocess(target_dir, save_path, args):
             # Original
             name_1 = os.path.basename(path_1)[:-4]
             name_2 = os.path.basename(path_2)[:-4]
-            wav_1 = audio.load_wav(path_1)
-            wav_2 = audio.load_wav(path_2)
+            wav_1 = librosa.load(path_1, sr=hparams.sample_rate)[0]
+            wav_2 = librosa.load(path_2, sr=hparams.sample_rate)[0]
+            
             
             # Time shift (Augment)
+            timeshift = 0.5 # 500ms
             new_wav = np.concatenate([wav_1, wav_2])
             
-            start = int(hparams.sample_rate*hparams.timeshift)
+            start = int(hparams.sample_rate*timeshift) # 0.5 is 500ms
             end = start + wav_1.shape[0]
             wav_3 = new_wav[start:end]
             
-            start = wav_1.shape[0] - int(hparams.sample_rate*hparams.timeshift)
-            end = - int(hparams.sample_rate*hparams.timeshift)
+            start = wav_1.shape[0] - int(hparams.sample_rate*timeshift)
+            end = - int(hparams.sample_rate*timeshift)
             wav_4 = new_wav[start:end]
             
             
@@ -106,64 +90,54 @@ def preprocess(target_dir, save_path, args):
                 wav = wav_list[j]
                 name = name_list[j]
                 
-                second = wav.shape[0] // hparams.sample_rate
-                window_len = (hparams.sample_rate * second) // (hparams.seq_length // 2)
-                hop_len = window_len // 2 # overlapping 50%
+                S = librosa.feature.melspectrogram(y=wav, sr=hparams.sample_rate,
+                                                   n_fft=hparams.n_fft,
+                                                   win_length=hparams.win_length,
+                                                   hop_length=hparams.hop_length,
+                                                   n_mels=args.n_mels)
+                S_len = S.shape[1]
+                
+                # Sequence Normalize
+                over_lapping = 0.5 # 0 <= over-lapping < 1 
+                window_length = S_len // int(args.seq_len * (1-over_lapping))
+                stride = int(window_length * (1-over_lapping))
                 
                 spectrum_list = []
-                for i in range(hparams.seq_length):
-                    if i != hparams.seq_length-1:
-                        window_start = i * hop_len
-                        window_end = window_start + window_len
+                for i in range(args.seq_len):
+                    if i != args.seq_len-1:
+                        window_start = i * stride
+                        window_end = window_start + window_length
                     else:
-                        window_start = -window_len
-                        window_end   = None
+                        window_start = - window_length
+                        window_end = None
 
-                    data = wav[window_start:window_end]
-
-                    spectrum = wav2spectrum(data)
+                    local_S = S[:,window_start:window_end]
+                    spectrum = time_wise_average(local_S)
                     spectrum_list.append(spectrum)
 
-                sequences = np.stack(spectrum_list, 0) # Shape = (sequence_length, n_dims)
+                sequence = np.stack(spectrum_list, 0) # Shape = (sequence_length, n_dims)
+                sequence = min_max_scaling(sequence)
                 
                 if j < 2:
-                    np.save(f"{save_path}/{target_name}/{key}/{name}.npy", sequences)
+                    np.save(f"{save_path}/{target_name}/{key}/{name}.npy", sequence)
                 else:
-                    np.save(f"{save_path}/{target_name}/{key}_shifted/{name}.npy", sequences)
+                    np.save(f"{save_path}/{target_name}/{key}_shifted/{name}.npy", sequence)
     
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_version', type=int, default=2019, help='-')
-    parser.add_argument('--data_path', type=str, default='../dataset', help='-')
+    parser.add_argument('--dataset-path', dest='dataset_path', type=str, default='../dataset', help='-')
+    parser.add_argument('--dataset-name', dest='dataset_name', type=str, default='SMD_dataset', help='-')
+    parser.add_argument('--n-mels', dest='n_mels', type=int, default=80, help='-')
+    parser.add_argument('--seq-len', dest='seq_len', type=int, default=32, help='-')
     args, unknown = parser.parse_known_args()
     
-    
-    targetDir_list = glob.glob(os.path.join(args.data_path, f'{args.data_version}_set', '*'))
+    targetDir_list = glob.glob(os.path.join(args.dataset_path, args.dataset_name, '*'))
+    targetDir_list = sorted(targetDir_list)
         
-    
-    set_dict={
-        'stft' : {
-            'func' : audio.spectrogram,
-            'n_dims' : int(1 + hparams.window_length/2)
-        },
-        'mel' : {
-            'func' : audio.melspectrogram,
-            'n_dims' :  hparams.n_mels
-        },
-        'mfcc' : {
-            'func' : audio.mfcc,
-            'n_dims' :  hparams.n_mfcc
-        }
-    }
-    
-    data_type = hparams.data_type
-    seq_length = hparams.seq_length
-    n_dims = set_dict[data_type]['n_dims']
-    
-    save_path = f"../timesteps_{seq_length}_{data_type}_{n_dims}"
+    save_path = "../seqlen_{}_mels_{}/{}".format(args.seq_len, args.n_mels, args.dataset_name)
 
     print(">> Preproecssing..")
     for target_dir in targetDir_list:
-        preprocess(target_dir, save_path, set_dict)
+        preprocess(target_dir, save_path, args)
     print(">> Done")   
