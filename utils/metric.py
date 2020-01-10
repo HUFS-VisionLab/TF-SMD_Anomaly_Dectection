@@ -15,7 +15,7 @@ def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight=1.4)
     threshold = value * weight
             
     for name, loss_list in loss_dict.items():
-        if name == target_name: # Real True
+        if name in target_name: # Real True
             for loss_val in loss_list:
                 if loss_val <= threshold: # Predict : True
                     TP += 1
