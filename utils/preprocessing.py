@@ -92,7 +92,6 @@ def preprocess(target_dir, save_path, args):
                 
                 S = librosa.feature.melspectrogram(y=wav, sr=hparams.sample_rate,
                                                    n_fft=hparams.n_fft,
-                                                   win_length=hparams.win_length,
                                                    hop_length=hparams.hop_length,
                                                    n_mels=args.n_mels)
                 S_len = S.shape[1]
