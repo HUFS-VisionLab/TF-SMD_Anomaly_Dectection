@@ -54,9 +54,6 @@ class SSAE:
         
     
     def _build(self):
-        """
-        Sequence-to-Sequence based Auto-encoder
-        """
         x = self.inputs
 
         n_layers = self.n_layers
@@ -76,31 +73,27 @@ class SSAE:
             x_forward = None
             x_backward = None
 
-            forward_layer = CuDNNLSTM(units=units, 
-                                      kernel_initializer='he_normal', 
-                                      return_sequences=True, 
-                                      return_state=True,
-                                      name=f'layer_{i}_forward')
-                                      
+            forward_layer = CuDNNLSTM(units=units, kernel_initializer='he_normal', 
+                                     return_sequences=True, return_state=True, name=f'layer_{i}_forward')
+
             x_forward, forward_h, forward_c = forward_layer(x)
-            encoder_states.append([[forward_h, forward_c]])
-            last_h_states += [forward_h]
 
-            x = x_forward
-
-            if bidirectional:
-                backward_layer = CuDNNLSTM(units=units, 
-                                           kernel_initializer='he_normal', 
-                                           return_sequences=True,
-                                           return_state=True,
-                                           go_backwards=True,
+            if bidirectional == True:
+                backward_layer = CuDNNLSTM(units=units, kernel_initializer='he_normal', 
+                                           return_sequences=True, return_state=True, go_backwards=True,
                                            name=f'layer_{i}_backward')
-                                           
-                x_backward, backward_h, backward_c = backward_layer(x)
-                encoder_states.append([[forward_h, forward_c], [backward_h, backward_c]])
-                last_h_states += [forward_h, backward_h]
 
+                x_backward, backward_h, backward_c = backward_layer(x)
+
+            if x_backward != None:
                 x = tf.concat([x_forward, x_backward], axis=-1)
+                last_h_states += [forward_h, backward_h]
+                encoder_states.append([[forward_h, forward_c], [backward_h, backward_c]])
+
+            else:
+                x = x_forward
+                last_h_states += [forward_h]
+                encoder_states.append([[forward_h, forward_c]])
 
         """ Decoder """
         for j in range(n_layers//2):
@@ -109,25 +102,21 @@ class SSAE:
             x_forward = None
             x_backward = None
 
-            forward_layer = CuDNNLSTM(units=units,
-                                      kernel_initializer='he_normal', 
-                                      return_sequences=True,
-                                      name=f'layer_{j}_forward')
-                                      
+            forward_layer = CuDNNLSTM(units=units, kernel_initializer='he_normal', 
+                                     return_sequences=True, name=f'layer_{j}_forward')
+
             x_forward = forward_layer(x, initial_state=encoder_states[-(j+1)][0])
-            
-            x = x_forward
-            
-            if bidirectional:
-                backward_layer = CuDNNLSTM(units=units, 
-                                           kernel_initializer='he_normal', 
-                                           return_sequences=True, 
-                                           go_backwards=True, 
-                                           name=f'layer_{j}_backward')
-                                           
+
+            if bidirectional == True:
+                backward_layer = CuDNNLSTM(units=units, kernel_initializer='he_normal', 
+                                           return_sequences=True, go_backwards=True, name=f'layer_{j}_backward')
+
                 x_backward = backward_layer(x, initial_state=encoder_states[-(j+1)][1])
-                
+
+            if x_backward != None:
                 x = tf.concat([x_forward, x_backward], axis=-1)
+            else:
+                x = x_forward
 
         outputs = x
         self.laten_vector = tf.concat(last_h_states, axis=-1) # laten vectors
