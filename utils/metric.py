@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_score(loss_dict, target_name, timesteps, inputs_dims, weight=1.2):
+def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight=1.4):
     score_dict = {}
     TPR = None # Recall
     FPR = None
@@ -11,10 +11,8 @@ def get_score(loss_dict, target_name, timesteps, inputs_dims, weight=1.2):
     FN = 0 # False Negative
     FP = 0 # False Positive
     Ne = 0 # Negative
-    
-    for name, loss_list in loss_dict.items():
-        if name == target_name:
-            threshold = weight * np.mean(loss_list)
+
+    threshold = value * weight
             
     for name, loss_list in loss_dict.items():
         if name == target_name: # Real True
