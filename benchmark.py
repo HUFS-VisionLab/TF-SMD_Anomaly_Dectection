@@ -11,7 +11,7 @@ def class_table(args):
     targetDir_list = glob.glob(os.path.join('./figure', args.dataset_name, f'*_{args.n_layers}_{args.epochs}'))
     for target_dir in targetDir_list:
         model_name = os.path.basename(target_dir)
-        save_figure_path = os.path.join('./benchmark', args.data_version, model_name)
+        save_figure_path = os.path.join('./benchmark', args.dataset_name, model_name)
         os.makedirs(save_figure_path, exist_ok=True)
         
         data_type = "seqlen_{}_mels_{}".format(args.seq_len, args.dims)
