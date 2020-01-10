@@ -14,41 +14,25 @@
 
 ## Files
 - `dataset/` : dataset directory
-- `hparams.py` : hyper parameter for preprocessing audio data. IMPORTANT
-- `utils/audio.py` : audio preprocessing functions.
-- `utils/preprocessing.py` : main preprocessing code.
+- `hparams.py` : hyper parameter for audio file of user. IMPORTANT
+- `utils/preprocessing.py` : preprocessing code.
 - `utils/metric.py` : metric functions.
-- `model.py` : nn model code.
-- `tf_models.py` : tf modules for nn model code.
+- `ssae.py` : SSAE model code.
 - `plot.py` : code to visualize results.
 - `run.py` : main code to execute training and test.
 - `benchmark.py` : code to benchmark.
-- `simulate.py` : script to run main process.
 
 ## How to use
 #### Hyper Parameter for preprocessing
 ```
 class hparams:
-    # Hyper Parameter for preprocessing
-    data_type = 'mel'
-    seq_length = 64
-    timeshift = 0.5 # 500ms
-
     # Hyper Parameters for Audio 
-    sample_rate = 192 * 1000
-    preemphasis = 0.97
+    sample_rate = 192 * 1000 # Based on SMD audio info
     window_length = 0.02 #20ms
-    window_stride = 0.01 #10ms
+    window_stride = 0.005 # 5ms
     n_fft = int(sample_rate * window_length) 
     win_length = n_fft
     hop_length = int(sample_rate * window_stride) 
-    n_mels = 80
-    n_mfcc = 60
-    min_level_db = -100
-    ref_level_db = 20
-    max_iters=200
-    griffin_lim_iters=60
-    power=1.5  
 ```
 
 #### Preprocessing
@@ -58,27 +42,31 @@ python preprocessing
 ```
 
 *Optional* :  
-- `--data_version` : Version of dataset. *choices*: '2018', '2019-1', '2019-2'
-- `--data_path`: Path of the dataset. *Default*: `../dataset`
+- `--dataset-path`: Path of the dataset. *Default*: `../dataset`
+- `--dataset-name` : Name of the dataset. *choices*: 'SMD_dataset', 'Custom_dataset', ...
+- `--n-mels` : the number of mel filters or frequency dimensions. *Default*: `80`
+- `--seq-len` : the value of target length of output sequence. Hyperparameter for *Sequence Normalize*. *Default*: `32`
 
 #### Running
 ```
 python run.py
 
 ex)
-python run.py --epochs 5000 --n_layers 4 --model_type 0 --data_type timesteps_64_mel_80 --targets CLR
+python run.py --n_layers 4 --epochs 5000 --dataset-name SMD_dataset --seq-len 32 --dims 80 --targets CLR-085
 ```
 
 *Required* :
 - `--targets` : List of category to train. *Default*: `None`.
   *Ex*: `--targets AT` -> ["AT"], `--targets AT ST` -> ["AT, ST"] 
+- `--n_layers`: The number of layers. *Default*: `4`
+- `--epochs`: The number of epochs. *Default*: `5000`
 
 *Optional* :  
-- `--n_layers`: The number of layers. *Default*: `3`
-- `--mode_type`: *Choices*: 0(Basic), 1(Autoencoder), 2(AutoEncoder_context), 3(OneClass), 4(OneClass_condition). *Default*: `2`
+- `--dataset-name`: The name of target dataset. *Default*: `SMD_dataset`
+- `--seq-len`: The length of input sequence. *Default*: `32`
+- `--dims`: The frequency dimension of input sequence. *Default*: `80`
+
 - `--no_bidirectional`: action='store_true', *Default*: `False`
-- `--data_type`: The detail of feature extraction. *Default*: `timesteps_64_mel_80`
-- `--augment`: The options of wav's starting point. The first character is for train data, and the second character is for test data. `0` is `normal`, `1` is `shifted`, and `2` is `both`. *Choices*: '00', '01', '02', '10', '11', '12', '20', '21', '22'. *Default*: `00`
 - `--learning_rate`: The value of learning rate for Adam Optimizer. *Default*: `0.005`
 - `--beta_1`: Beta_1 of Adam Optimizer. *Default*: `0.9`
 - `--beta_2`: Beta_2 of Adam Optimizer. *Default*: `0.999`
@@ -86,5 +74,5 @@ python run.py --epochs 5000 --n_layers 4 --model_type 0 --data_type timesteps_64
 - `--epochs`: The number of epochs. *Default*: `3000`
 - `--batch_size`: The size of mini-batch. *Default*: `None`. *type*: int
 - `--model_path`: Save path of trained model. *Default*: `./model`
-- `--inference`: *Choices*: False(train), True(test). *Default*: `False`
-- `--loss_log_scale`: If you want to see log scaled loss value. *Choice*: `0(False)`, `1(True)`.
+- `--test`: *Default*: `False`
+- `--threshold_weight`: the value of weight to make threshold. *Default*: `2.0`
