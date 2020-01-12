@@ -63,6 +63,8 @@ if __name__ == '__main__' :
     args.save_path   = os.path.join(args.save_path, target_name)
     
     with tf.Graph().as_default():
+        tf.set_random_seed(123456789)
+        
         model = SSAE(args)
     
         if args.test == False:
