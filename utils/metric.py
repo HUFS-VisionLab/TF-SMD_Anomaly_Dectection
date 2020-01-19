@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight=1.4):
+def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight):
     score_dict = {}
     TPR = None # Recall
     FPR = None
