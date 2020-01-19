@@ -16,21 +16,18 @@ def save_loss(loss_list, model_path):
     plt.close()
     
     
-def compare_loss(loss_dict, model_path, value, save_figure_path, weight=1.4, log_scaling=0):
+def compare_loss(loss_dict, model_path, value, save_figure_path, weight):
     plt.clf()
     plt.rcParams['font.size'] = 15
     
     xlabel = "index of data"
-    ylabel = "loss -- y=log10(x+10)" if log_scaling==1 else "loss"
+    ylabel = "loss"
     
     if value != None:
         threshold = value * weight
         plt.axhline(y=threshold, color='r', linestyle='-', label='Threshold')
     
     for name, loss_list in loss_dict.items():
-        if log_scaling == 1:
-            loss_list = np.log10(np.array(loss_list) + 10)
-        
         plt.scatter(range(len(loss_list)), loss_list, label=name, s=10)
         
     plt.xlabel(xlabel)
