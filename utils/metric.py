@@ -11,6 +11,7 @@ def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight=1.4)
     FN = 0 # False Negative
     FP = 0 # False Positive
     Ne = 0 # Negative
+    eps = 1e-8
 
     threshold = value * weight
             
@@ -27,11 +28,11 @@ def get_score(loss_dict, target_name, value, timesteps, inputs_dims, weight=1.4)
                 if loss_val <= threshold: # Predict : True
                     FP += 1
     
-    TPR = recall = TP / (TP + FN)
+    TPR = recall = TP / (TP + FN + eps) 
     FPR = FP / Ne
-    precision = TP / (TP + FP)
+    precision = TP / (TP + FP + eps) 
     
-    F1_SCORE = 2 * (precision * recall ) / (precision + recall)
+    F1_SCORE = 2 * (precision * recall ) / (precision + recall + eps)
     
     
     score_dict = {
