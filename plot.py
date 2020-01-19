@@ -42,7 +42,7 @@ def compare_loss(loss_dict, model_path, value, save_figure_path, weight=1.4, log
     plt.savefig(f"{model_path}/compare_loss.png")
     plt.savefig(f"{save_figure_path}_compare_loss.png")
     
-    plt.ylim(0, value * 5)
+    plt.ylim(0, threshold * 2)
     plt.savefig(f"{model_path}/compare_loss_zoom.png")
     plt.savefig(f"{save_figure_path}_compare_loss_zoom.png")
 
@@ -98,9 +98,9 @@ def score_table(scoreDict_list, save_path):
             'weight' : score_dict['weight'],
             'seq_length' : score_dict['seq_length'],
             'dims' : score_dict['dims'],
-            'TPR' : round(avg_TPR, 2),
-            'FPR' : round(avg_FPR, 2),
-            'F1_SCORE' : round(avg_F1_score, 2)
+            'TPR' : round(avg_TPR, 3),
+            'FPR' : round(avg_FPR, 3),
+            'F1_SCORE' : round(avg_F1_score, 3)
         }
     )
     
@@ -146,3 +146,6 @@ def custom_table(scoreDict_list, save_path, save_name):
     for pos in ['right','top','bottom','left']:
         plt.gca().spines[pos].set_visible(False)
     plt.savefig(os.path.join(save_path, f'{save_name}.png'))
+    
+    
+    
